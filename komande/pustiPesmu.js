@@ -27,32 +27,23 @@ module.exports = {
 				.setDescription("Plays a single song from YT")
 				.addStringOption(option => option.setName("url").setDescription("the song's url").setRequired(true))
 		),
-	execute: async ({ client, interaction }) => {
-        // Make sure the user is inside a voice channel
-		if (!interaction.member.voice.channel) return interaction.reply("You need to be in a Voice Channel to play a song.");
+	execute: async ({ client, interaction}) => {
+        if (!interaction.member.voice.channel) return interaction.editReply("You need to be in a VC to use this command")
 
-        // Create a play queue for the server
-		const queue = await client.player.createQueue(interaction.guild);
-
-        // Wait until you are connected to the channel
+		const queue = await client.player.createQueue(interaction.guild)
 		if (!queue.connection) await queue.connect(interaction.member.voice.channel)
 
 		const embed = new EmbedBuilder();
 
-		if (interaction.options.getSubcommand() === "song") {
+        if (interaction.options.getSubcommand() === "song") {
             let url = interaction.options.getString("url")
-            
-            // Search for the song using the discord-player
             const result = await client.player.search(url, {
                 requestedBy: interaction.user,
                 searchEngine: QueryType.YOUTUBE_VIDEO
             })
-
-            // finish if no tracks were found
             if (result.tracks.length === 0)
                 return interaction.reply("No results")
-
-            // Add the track to the queue
+            
             const song = result.tracks[0]
             await queue.addTrack(song)
             embed
@@ -60,10 +51,7 @@ module.exports = {
                 .setThumbnail(song.thumbnail)
                 .setFooter({ text: `Duration: ${song.duration}`})
 
-		}
-        else if (interaction.options.getSubcommand() === "playlist") {
-
-            // Search for the playlist using the discord-player
+		} else if (interaction.options.getSubcommand() === "playlist") {
             let url = interaction.options.getString("url")
             const result = await client.player.search(url, {
                 requestedBy: interaction.user,
@@ -71,30 +59,23 @@ module.exports = {
             })
 
             if (result.tracks.length === 0)
-                return interaction.reply(`No playlists found with ${url}`)
+                return interaction.reply("No results")
             
-            // Add the tracks to the queue
             const playlist = result.playlist
             await queue.addTracks(result.tracks)
             embed
                 .setDescription(`**${result.tracks.length} songs from [${playlist.title}](${playlist.url})** have been added to the Queue`)
                 .setThumbnail(playlist.thumbnail)
-
-		} 
-        else if (interaction.options.getSubcommand() === "search") {
-
-            // Search for the song using the discord-player
+		} else if (interaction.options.getSubcommand() === "search") {
             let url = interaction.options.getString("searchterms")
             const result = await client.player.search(url, {
                 requestedBy: interaction.user,
                 searchEngine: QueryType.AUTO
             })
 
-            // finish if no tracks were found
             if (result.tracks.length === 0)
-                return interaction.editReply("No results")
+                return interaction.reply("No results")
             
-            // Add the track to the queue
             const song = result.tracks[0]
             await queue.addTrack(song)
             embed
@@ -102,11 +83,12 @@ module.exports = {
                 .setThumbnail(song.thumbnail)
                 .setFooter({ text: `Duration: ${song.duration}`})
 		}
-
-        // Play the song
         if (!queue.playing) await queue.play()
-        
-        // Respond with the embed containing information about the player
+
+        for (let index = 0; index < queue.tracks.length; index++) {
+            console.log(queue.tracks[index].title)
+        }
+
         await interaction.reply({
             embeds: [embed]
         })
