@@ -1,10 +1,9 @@
 require('dotenv').config();
-
+const { DisTube } = require('distube');
 const {REST} = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
-const { Player } = require("discord-player")
-
+const { EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -22,6 +21,9 @@ client.commands = new Collection();
 
 const commandsPath = path.join(__dirname, "komande"); // E:\yt\discord bot\js\intro\commands
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+const embed = new EmbedBuilder();
+
+
 for(const file of commandFiles)
 {
     const filePath = path.join(commandsPath, file);
@@ -31,13 +33,22 @@ for(const file of commandFiles)
     commands.push(command.data.toJSON());
 }
 
-// Add the player on the client
-client.player = new Player(client, {
-    ytdlOptions: {
-        quality: "highestaudio",
-        highWaterMark: 1 << 25
-    }
-})
+const distube = new DisTube(client, {
+	searchSongs: 5,
+	searchCooldown: 30,
+	leaveOnEmpty: false,
+	leaveOnFinish: false,
+	leaveOnStop: false,
+});
+distube.on("addSong", (queue, song) => queue.textChannel.send({
+    embeds:[embed.setDescription(`**[${song.name}](${song.url})** has been added to the Queue by  ${song.user}`)
+    .setThumbnail(song.thumbnail)
+    .setFooter({ text: `Duration: ${song.duration}`})]
+}
+    
+    
+));
+
 
 client.on("ready", () => {
     // Get all ids of the servers
@@ -62,7 +73,7 @@ client.on("interactionCreate", async interaction => {
 
     try
     {
-        await command.execute({client, interaction});
+        await command.execute({client, interaction,distube});
     }
     catch(error)
     {
