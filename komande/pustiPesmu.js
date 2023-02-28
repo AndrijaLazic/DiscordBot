@@ -48,7 +48,17 @@ module.exports = {
                     message:interaction.message,
                     textChannel: interaction.channel,
                     member: interaction.member,
-                });
+                }).then((x)=>{
+                    const queue = distube.getQueue(interaction)
+                    console.log(queue)
+                    console.log(x)
+                })
+
+                // embed
+                // .setDescription(`**${result.tracks.length} song from [${playlist.title}](${playlist.url})** have been added to the Queue`)
+                // .setThumbnail(playlist.thumbnail)
+
+                
                 
             } else {
                 
@@ -86,5 +96,11 @@ module.exports = {
         //     await queue.connect(interaction.member.voice.channel)
         // }
         
+        // await interaction.reply({
+        //     embeds: [
+        //         embed
+        //             .setDescription(`${currentSong} has been skipped!`)
+        //     ]
+        // })
 	},
 }

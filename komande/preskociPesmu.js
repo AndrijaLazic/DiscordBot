@@ -6,30 +6,47 @@ module.exports = {
         .setName("skip")
         .setDescription("Skips the current song"),
 
-	execute: async ({ client, interaction }) => {
+	execute: async ({ client, interaction,distube }) => {
 
+        if (!interaction.member.voice.channel){
+            return interaction.reply("You need to be in a VC to use this command")
+        }
+
+
+        const embed = new EmbedBuilder();
         // Get the queue for the server
-		const queue = client.player.getQueue(interaction.guildId)
+		const queue = distube.getQueue(interaction)
 
         // If there is no queue, return
 		if (!queue)
         {
             await interaction.reply("There are no songs in the queue");
-            return;
+                return;
         }
 
-        const currentSong = queue.current
+        const currentSong = queue.songs[0].name
+
+        if(queue.songs.length==1){
+            distube.stop(interaction)
+            await interaction.reply({
+                embeds: [
+                    embed
+                        .setDescription(`${currentSong} has been skipped!`)
+                ]
+            })
+            return
+        }
+            
 
         // Skip the current song
-		queue.skip()
+		distube.skip(interaction)
 
         // Return an embed to the user saying the song has been skipped
-        const embed = new EmbedBuilder();
+        
         await interaction.reply({
             embeds: [
                 embed
-                    .setDescription(`${currentSong.title} has been skipped!`)
-                    .setThumbnail(currentSong.thumbnail)
+                    .setDescription(`${currentSong} has been skipped!`)
             ]
         })
 	},
